@@ -1,0 +1,12 @@
+{% extends 'todo_task/base.html' %}
+
+{% block content %}
+  <h2>Task Detail</h2>
+  <p>Title: {{ task.title }}</p>
+  <p>Description: {{ task.description }}</p>
+  <p>Due Date: {{ task.due_date }}</p>
+  <p>Completed: {{ task.completed }}</p>
+  <a href="{% url 'todo_task:task_update' task.id %}" class="btn btn-primary">Update</a>
+  <a href="{% url 'todo_task:task_delete' task.id %}" class="btn btn-danger">Delete</a>
+  <a href="{% url 'todo_task:task_list' %}" class="btn btn-secondary">Back to Task List</a>
+{% endblock content %}

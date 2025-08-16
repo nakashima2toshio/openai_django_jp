@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+    【home】
+    {% if user.is_authenticated %}
+        <p>ログインユーザー: {{ user.username }}</p>
+    {% else %}
+        <p>ログインしていません。</p>
+    {% endif %}
+<div class="container text-center">
+  <div class="row">
+    <div class="col-md-10">
+    
+    <table class="table table-bordered table-striped-columns table-sm">
+    <thead>
+      <tr>
+        <th scope="col">機能.</th>
+        <th scope="col">リンク</th>
+        <th scope="col">URL</th>
+        <th scope="col">備考</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>登録</td>
+            <td><a href="http://127.0.0.1:8000/accounts/signup/">signup</a></td>
+            <td>http://127.0.0.1:8000/accounts/signup/</td>
+            <td>　</td>
+        </tr>
+            <tr>
+            <td>ログイン</td>
+            <td><a href="http://127.0.0.1:8000/accounts/login/">login</a></td>
+            <td>http://127.0.0.1:8000/accounts/login/</td>
+            <td>　</td>
+        </tr>
+        <tr>
+            <td>ログアウト</td>
+            <td><a href="http://127.0.0.1:8000/accounts/logout/">logout</a></td>
+            <td>http://127.0.0.1:8000/accounts/logout/</td>
+            <td>　</td>
+        </tr>
+        <tr>
+            <td>todo_taskアプリ</td>
+            <td><a href="http://127.0.0.1:8000/todo_task/tasks/">todo_task</a></td>
+            <td>http://127.0.0.1:8000/accounts/logout/</td>
+            <td>　</td>
+        </tr>
+    </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,1 @@
+python manage.py loaddata todo_task/fixtures/initial_data.json

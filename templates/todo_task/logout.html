@@ -1,0 +1,6 @@
+{% extends 'todo_task/base.html' %}
+
+{% block content %}
+  <h2>You have been logged out.</h2>
+  <p><a href="{% url 'todo_task:login' %}">Click here</a> to log in again.</p>
+{% endblock %}

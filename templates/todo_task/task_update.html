@@ -1,0 +1,22 @@
+{% extends 'todo_task/base.html' %}
+
+{% block content %}
+  <h2>Update Task</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Update</button>
+    <a href="{% url 'todo_task:task_list' %}" class="btn btn-secondary">Back to Task List</a>
+  </form>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const dueDateField = document.querySelector('#id_due_date');
+      dueDateField.setAttribute('data-provide', 'datepicker');
+      dueDateField.setAttribute('data-date-format', 'yyyy-mm-dd');
+
+      const datepickerElement = new Datepicker(document.querySelector('#datepicker'), {
+        format: 'yyyy-mm-dd'
+      });
+    });
+  </script>
+{% endblock content %}

@@ -1,0 +1,356 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ demo_name }} - OpenAI Responses API デモ{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h1 class="mb-4">{{ demo_name }}</h1>
+            <p class="lead">OpenAI Responses APIを使用したテキスト応答デモ</p>
+        </div>
+    </div>
+
+    <!-- 実装例の説明 -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>OpenAI API(IPO):実装例</h5>
+                </div>
+                <div class="card-body">
+                    <p>responses.create()の基本的なテキスト応答デモ。デフォルトメッセージ+ユーザー入力でOne-Shot応答を実行。EasyInputMessageParamでメッセージ構築し、ResponseProcessorUIで結果表示。</p>
+                    <pre><code>messages = get_default_messages()
+messages.append(
+    EasyInputMessageParam(role="user", content=user_input)
+)
+
+# 統一されたAPI呼び出し（temperatureパラメータ対応）
+response = self.call_api_unified(messages, temperature=temperature)
+　┗ api_params = {
+    "input": messages,
+    "model": model
+    }
+    self.client.responses.create(**params)
+ResponseProcessorUI.display_response(response)</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API設定パネル -->
+    <div class="row">
+        <div class="col-md-8">
+            <!-- メインフォーム -->
+            <div class="card">
+                <div class="card-header">
+                    <h5>質問入力</h5>
+                </div>
+                <div class="card-body">
+                    <form id="queryForm">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="userInput" class="form-label">質問を入力してください:</label>
+                            <textarea class="form-control" id="userInput" rows="4" placeholder="例: {{ example_query }}">{{ example_query }}</textarea>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="modelSelect" class="form-label">モデル選択:</label>
+                                <select class="form-select" id="modelSelect">
+                                    {% for model in available_models %}
+                                        <option value="{{ model }}" {% if model == default_model %}selected{% endif %}>{{ model }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="temperatureSlider" class="form-label">Temperature: <span id="temperatureValue">0.3</span></label>
+                                <input type="range" class="form-range" id="temperatureSlider" min="0" max="1" step="0.05" value="0.3">
+                                <div id="temperatureInfo" class="text-muted small"></div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <span class="spinner-border spinner-border-sm d-none" id="loadingSpinner" role="status"></span>
+                            送信
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 結果表示エリア -->
+            <div class="card mt-4" id="resultCard" style="display: none;">
+                <div class="card-header">
+                    <h5>🤖 応答結果</h5>
+                </div>
+                <div class="card-body">
+                    <div id="responseContent"></div>
+                    
+                    <!-- 詳細情報（折りたたみ） -->
+                    <div class="mt-3">
+                        <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#detailsCollapse">
+                            📊 詳細情報
+                        </button>
+                    </div>
+                    <div class="collapse mt-3" id="detailsCollapse">
+                        <div class="card card-body">
+                            <div id="detailsContent"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- エラー表示エリア -->
+            <div class="alert alert-danger mt-4" id="errorAlert" style="display: none;">
+                <h6>エラーが発生しました</h6>
+                <div id="errorMessage"></div>
+            </div>
+        </div>
+
+        <!-- サイドバー -->
+        <div class="col-md-4">
+            <!-- モデル情報 -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6>📊 モデル情報</h6>
+                </div>
+                <div class="card-body" id="modelInfo">
+                    <div class="text-muted">モデルを選択してください</div>
+                </div>
+            </div>
+
+            <!-- トークン情報 -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6>📝 トークン情報</h6>
+                </div>
+                <div class="card-body" id="tokenInfo">
+                    <div class="text-muted">入力テキストを入力してください</div>
+                </div>
+            </div>
+
+            <!-- 使用方法 -->
+            <div class="card">
+                <div class="card-header">
+                    <h6>ℹ️ 使用方法</h6>
+                </div>
+                <div class="card-body">
+                    <ol class="small">
+                        <li>質問を入力してください</li>
+                        <li>使用するモデルを選択してください</li>
+                        <li>必要に応じてTemperatureを調整してください</li>
+                        <li>「送信」ボタンをクリックして実行してください</li>
+                    </ol>
+                    <hr>
+                    <p class="small mb-0"><strong>注意:</strong> 推論系モデル（o1, o3, o4, gpt-5系）ではTemperatureパラメータは使用されません。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('queryForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const resultCard = document.getElementById('resultCard');
+    const errorAlert = document.getElementById('errorAlert');
+    const modelSelect = document.getElementById('modelSelect');
+    const temperatureSlider = document.getElementById('temperatureSlider');
+    const temperatureValue = document.getElementById('temperatureValue');
+    const temperatureInfo = document.getElementById('temperatureInfo');
+    const userInput = document.getElementById('userInput');
+
+    // Temperature値の更新
+    temperatureSlider.addEventListener('input', function() {
+        temperatureValue.textContent = this.value;
+    });
+
+    // モデル変更時の処理
+    modelSelect.addEventListener('change', function() {
+        updateModelInfo(this.value);
+    });
+
+    // 入力テキスト変更時のトークン情報更新
+    userInput.addEventListener('input', function() {
+        updateTokenInfo();
+    });
+
+    // フォーム送信処理
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const userInputValue = userInput.value.trim();
+        if (!userInputValue) {
+            showError('入力テキストが空です');
+            return;
+        }
+
+        // ローディング状態
+        setLoading(true);
+        hideError();
+        hideResult();
+
+        const formData = {
+            user_input: userInputValue,
+            model: modelSelect.value,
+            temperature: parseFloat(temperatureSlider.value)
+        };
+
+        // CSRF token取得
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch('/test_response_demo/process/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            setLoading(false);
+            
+            if (data.success) {
+                showResult(data);
+            } else {
+                showError(data.error || 'エラーが発生しました');
+            }
+        })
+        .catch(error => {
+            setLoading(false);
+            showError('ネットワークエラーが発生しました: ' + error.message);
+        });
+    });
+
+    function setLoading(loading) {
+        if (loading) {
+            loadingSpinner.classList.remove('d-none');
+            submitBtn.disabled = true;
+        } else {
+            loadingSpinner.classList.add('d-none');
+            submitBtn.disabled = false;
+        }
+    }
+
+    function showResult(data) {
+        const responseContent = document.getElementById('responseContent');
+        const detailsContent = document.getElementById('detailsContent');
+
+        // 応答テキストの表示
+        if (data.texts && data.texts.length > 0) {
+            responseContent.innerHTML = data.texts.map(text => 
+                `<div class="mb-3"><div class="border-start border-primary ps-3">${text.replace(/\n/g, '<br>')}</div></div>`
+            ).join('');
+        } else {
+            responseContent.innerHTML = '<div class="text-muted">テキストが見つかりませんでした</div>';
+        }
+
+        // 詳細情報の表示
+        const details = `
+            <div class="row">
+                <div class="col-md-4">
+                    <strong>モデル:</strong><br>
+                    <span class="text-muted">${data.model}</span>
+                </div>
+                <div class="col-md-4">
+                    <strong>入力トークン:</strong><br>
+                    <span class="text-muted">${data.input_tokens.toLocaleString()}</span>
+                </div>
+                <div class="col-md-4">
+                    <strong>出力トークン:</strong><br>
+                    <span class="text-muted">${data.output_tokens.toLocaleString()}</span>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-md-6">
+                    <strong>合計トークン:</strong><br>
+                    <span class="text-muted">${data.total_tokens.toLocaleString()}</span>
+                </div>
+                <div class="col-md-6">
+                    <strong>レスポンスID:</strong><br>
+                    <span class="text-muted small">${data.response.id || 'N/A'}</span>
+                </div>
+            </div>
+        `;
+        detailsContent.innerHTML = details;
+
+        resultCard.style.display = 'block';
+        resultCard.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function showError(message) {
+        document.getElementById('errorMessage').textContent = message;
+        errorAlert.style.display = 'block';
+        errorAlert.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function hideError() {
+        errorAlert.style.display = 'none';
+    }
+
+    function hideResult() {
+        resultCard.style.display = 'none';
+    }
+
+    function updateModelInfo(modelName) {
+        const modelInfo = document.getElementById('modelInfo');
+        modelInfo.innerHTML = '<div class="text-muted">読み込み中...</div>';
+
+        fetch(`/test_response_demo/model/${modelName}/info/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const info = `
+                    <div><strong>モデル名:</strong> ${data.model_name}</div>
+                    <div><strong>最大入力:</strong> ${data.limits.max_tokens.toLocaleString()} トークン</div>
+                    <div><strong>最大出力:</strong> ${data.limits.max_output.toLocaleString()} トークン</div>
+                    <div><strong>推論モデル:</strong> ${data.is_reasoning_model ? 'はい' : 'いいえ'}</div>
+                    ${data.pricing.input ? `<div><strong>入力料金:</strong> $${data.pricing.input}/1000トークン</div>` : ''}
+                    ${data.pricing.output ? `<div><strong>出力料金:</strong> $${data.pricing.output}/1000トークン</div>` : ''}
+                `;
+                modelInfo.innerHTML = info;
+
+                // Temperature情報の更新
+                if (data.is_reasoning_model) {
+                    temperatureInfo.textContent = '推論系モデルではtemperatureは使用されません';
+                    temperatureSlider.disabled = true;
+                } else {
+                    temperatureInfo.textContent = '低い値ほど一貫性のある回答';
+                    temperatureSlider.disabled = false;
+                }
+            } else {
+                modelInfo.innerHTML = '<div class="text-danger">情報の取得に失敗しました</div>';
+            }
+        })
+        .catch(error => {
+            modelInfo.innerHTML = '<div class="text-danger">ネットワークエラー</div>';
+        });
+    }
+
+    function updateTokenInfo() {
+        const text = userInput.value.trim();
+        const tokenInfo = document.getElementById('tokenInfo');
+        
+        if (!text) {
+            tokenInfo.innerHTML = '<div class="text-muted">入力テキストを入力してください</div>';
+            return;
+        }
+
+        // 簡易的なトークン数推定（実際の値とは異なる場合があります）
+        const estimatedTokens = Math.ceil(text.length / 3);
+        tokenInfo.innerHTML = `
+            <div><strong>推定トークン数:</strong> ${estimatedTokens.toLocaleString()}</div>
+            <div class="small text-muted">※実際の値とは異なる場合があります</div>
+        `;
+    }
+
+    // 初期化
+    updateModelInfo(modelSelect.value);
+    updateTokenInfo();
+});
+</script>
+{% endblock %}

@@ -8,7 +8,7 @@ pip install -r requirements.txt
 ```
 ```bash
 # setting
-PYTHONUNBUFFERED=1;DJANGO_SETTINGS_MODULE=django_web_allauth.settings
+PYTHONUNBUFFERED=1;DJANGO_SETTINGS_MODULE=openai_django_jp.settings
 ```
 ・はじめに、DBとの接続を実施する。
 ```python

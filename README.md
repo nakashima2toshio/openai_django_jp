@@ -1,3 +1,6 @@
+# OpenAI API from Scratch + Django
+## スクラッチで OpenAI API + Django
+
 ##### 実行方法：
 - python manage.py runserver 0.0.0.0:8000
 

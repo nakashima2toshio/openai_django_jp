@@ -1,7 +1,7 @@
-# Django + OpenAI API 統合プロジェクト
+## Django + OpenAI API From Scratch
+## スクラッチで (Django + OpenAI API)
 
 ## 🔗 関連プロジェクト## 🔗 関連プロジェクト
-
 
 | プロジェクト                                                             | 説明                                         | ステータス |
 | ------------------------------------------------------------------------ | -------------------------------------------- | ---------- |
@@ -27,17 +27,17 @@
 
 ## 📚 目次
 
-- 1. [プロジェクト概要](#-プロジェクト概要)
-- 2. [システムアーキテクチャ](#-システムアーキテクチャ)
-- 3. [クイックスタート](#-クイックスタート)
-- 4. [詳細セットアップ](#-詳細セットアップ)
-- 5. [Django基本機能](#-django基本機能)
-- 6. [OpenAI API統合](#-openai-api統合)
-- 7. [test_response_demoアプリ詳細](#-test_response_demoアプリ詳細)
-- 8. [新規OpenAI APIアプリ作成ガイド](#-新規openai-apiアプリ作成ガイド)
-- 9. [データベース設計](#-データベース設計)
-- 10. [開発・運用](#-開発運用)
-- 11. [トラブルシューティング](#-トラブルシューティング)
+1. [プロジェクト概要](#-プロジェクト概要)
+2. [システムアーキテクチャ](#-システムアーキテクチャ)
+3. [クイックスタート](#-クイックスタート)
+4. [詳細セットアップ](#-詳細セットアップ)
+5. [Django基本機能](#-django基本機能)
+6. [OpenAI API統合](#-openai-api統合)
+7. [test_response_demoアプリ詳細](#-test_response_demoアプリ詳細)
+8. [新規OpenAI APIアプリ作成ガイド](#-新規openai-apiアプリ作成ガイド)
+9. [データベース設計](#-データベース設計)
+10. [開発・運用](#-開発運用)
+11. [トラブルシューティング](#-トラブルシューティング)
 
 ---
 
@@ -326,7 +326,7 @@ class Task(models.Model):
   
     class Meta:
         ordering = ['-priority', 'due_date']
-    
+  
     def __str__(self):
         return self.title
 ```
@@ -445,23 +445,23 @@ class AIAssistantView(View):
     @error_handler
     def post(self, request):
         user_input = request.POST.get('message')
-    
+  
         # メッセージ構築
         messages = [
             {"role": "system", "content": "あなたは親切なアシスタントです"},
             {"role": "user", "content": user_input}
         ]
-    
+  
         # API呼び出し
         response = self.client.create_response(
             input=messages,
             model="gpt-4o-mini",
             temperature=0.7
         )
-    
+  
         # レスポンス処理
         texts = ResponseProcessor.extract_text(response)
-    
+  
         return JsonResponse({
             'success': True,
             'response': texts[0] if texts else '',
@@ -515,12 +515,12 @@ class BaseDemo(ABC):
     def is_reasoning_model(self, model: str = None) -> bool:
         """推論系モデル判定"""
         # o1, o3, o4, gpt-5系は推論モデル
-    
+  
     @error_handler
     def call_api_unified(self, messages, model=None, temperature=None):
         """統一API呼び出し"""
         # 推論モデルはtemperature非対応
-    
+  
     @abstractmethod
     def process_query(self, user_input: str, **kwargs):
         """処理ロジック（サブクラスで実装）"""
@@ -539,17 +539,17 @@ class TextResponseDemo(BaseDemo):
         messages.append(
             EasyInputMessageParam(role="user", content=user_input)
         )
-    
+  
         # API呼び出し
         response = self.call_api_unified(
             messages, 
             model=model, 
             temperature=temperature
         )
-    
+  
         # 結果整形
         result = ResponseProcessor.format_response(response)
-    
+  
         return {
             'success': True,
             'response': result,
@@ -634,7 +634,7 @@ class ChatView(LoginRequiredMixin, View):
     def __init__(self):
         super().__init__()
         self.client = OpenAIClient()
-    
+  
     def get(self, request):
         """チャット画面表示"""
         context = {
@@ -649,14 +649,14 @@ class ChatView(LoginRequiredMixin, View):
         session_id = data.get('session_id')
         message = data.get('message')
         model = data.get('model', 'gpt-4o-mini')
-    
+  
         # セッション取得または作成
         session = self._get_or_create_session(request.user, session_id)
-    
+  
         # メッセージ履歴構築
         messages = self._build_message_history(session)
         messages.append({"role": "user", "content": message})
-    
+  
         # API呼び出し
         response = self.client.create_response(
             input=messages,
@@ -664,12 +664,12 @@ class ChatView(LoginRequiredMixin, View):
             temperature=0.7,
             stream=False  # ストリーミングも可能
         )
-    
+  
         # レスポンス処理と保存
         assistant_message = self._process_and_save_response(
             session, message, response
         )
-    
+  
         return JsonResponse({
             'success': True,
             'message': assistant_message,
@@ -704,18 +704,18 @@ class ChatView(LoginRequiredMixin, View):
             content=user_message,
             tokens_used=response.usage.prompt_tokens if response.usage else 0
         )
-    
+  
         # アシスタントメッセージ抽出と保存
         texts = ResponseProcessor.extract_text(response)
         assistant_message = texts[0] if texts else "申し訳ございません。応答を生成できませんでした。"
-    
+  
         ChatMessage.objects.create(
             session=session,
             role="assistant",
             content=assistant_message,
             tokens_used=response.usage.completion_tokens if response.usage else 0
         )
-    
+  
         return assistant_message
 ```
 
@@ -764,7 +764,7 @@ urlpatterns = [
                 </div>
             </div>
         </div>
-    
+  
         <div class="col-md-9">
             <!-- チャットエリア -->
             <div class="card">
@@ -803,11 +803,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const input = document.getElementById('messageInput');
         const message = input.value.trim();
         if (!message) return;
-    
+  
         // UIに表示
         appendMessage('user', message);
         input.value = '';
-    
+  
         // API呼び出し
         fetch('/ai-chat/', {
             method: 'POST',
@@ -866,7 +866,7 @@ def stream_chat(request):
             model="gpt-4o-mini",
             stream=True
         )
-    
+  
         for chunk in stream:
             if chunk.choices[0].delta.content:
                 yield f"data: {json.dumps({'content': chunk.choices[0].delta.content})}\n\n"
@@ -1048,24 +1048,24 @@ class OpenAIIntegrationTest(TestCase):
             MagicMock(message=MagicMock(content="テスト応答"))
         ]
         mock_openai.return_value.chat.completions.create.return_value = mock_response
-    
+  
         # テスト実行
         client = OpenAIClient()
         response = client.create_response(
             input=[{"role": "user", "content": "テスト"}],
             model="gpt-4o-mini"
         )
-    
+  
         # アサーション
         self.assertIsNotNone(response)
-    
+  
     def test_token_counting(self):
         """トークン計算テスト"""
         from helper_api import TokenManager
-    
+  
         text = "これはテストテキストです。"
         tokens = TokenManager.count_tokens(text, "gpt-4o-mini")
-    
+  
         self.assertGreater(tokens, 0)
         self.assertLess(tokens, 100)
 ```
@@ -1089,21 +1089,21 @@ class ChatViewTest(TestCase):
             email='test@example.com',
             password='testpass123'
         )
-    
+  
     def test_chat_requires_login(self):
         """ログイン必須テスト"""
         response = self.client.get('/ai-chat/')
         self.assertEqual(response.status_code, 302)  # リダイレクト
-    
+  
     def test_chat_post_message(self):
         """メッセージ投稿テスト"""
         self.client.login(username='testuser', password='testpass123')
-    
+  
         response = self.client.post('/ai-chat/', {
             'message': 'テストメッセージ',
             'model': 'gpt-4o-mini'
         }, content_type='application/json')
-    
+  
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertTrue(data['success'])
@@ -1125,15 +1125,15 @@ class OptimizedChatView(View):
         """類似応答をキャッシュ"""
         # キャッシュキー生成
         cache_key = f"chat_response_{hashlib.md5(query.encode()).hexdigest()}"
-    
+  
         # キャッシュチェック
         cached = cache.get(cache_key)
         if cached:
             return cached
-    
+  
         # API呼び出し
         response = self.client.create_response(...)
-    
+  
         # キャッシュ保存
         cache.set(cache_key, response, 3600)
         return response
@@ -1210,7 +1210,7 @@ class UsageMonitor:
         """API使用ログ"""
         logger.info(f"API Usage: user={user.id}, model={model}, "
                    f"tokens={tokens_used}, cost=${cost:.4f}")
-    
+  
         # データベースに記録
         APIUsage.objects.create(
             user=user,
@@ -1224,7 +1224,7 @@ class UsageMonitor:
         """日次使用量取得"""
         if date is None:
             date = datetime.now().date()
-    
+  
         return APIUsage.objects.filter(
             user=user,
             created_at__date=date
@@ -1241,10 +1241,10 @@ class UsageMonitor:
             user=user,
             created_at__gte=one_hour_ago
         ).count()
-    
+  
         if recent_count >= 100:  # 1時間100リクエスト制限
             raise RateLimitExceeded("API rate limit exceeded")
-    
+  
         return recent_count
 ```
 
@@ -1431,7 +1431,7 @@ def process_large_text(text):
             model="gpt-4o-mini"
         )
         results.append(response)
-    
+  
     return results
 ```
 

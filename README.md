@@ -14,7 +14,7 @@
 
 ## DjangoでOpenAI APIマスター - 完全ガイド
 
-<div align="center">
+<div>
 
 [![Python](https://img.shields.io/badge/Python-3.9%2B-blue)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/Django-5.2.5-green)](https://www.djangoproject.com/)
